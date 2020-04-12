@@ -1,16 +1,32 @@
 package main
 
 import (
-	"fmt"
+	"net/http"
+	"time"
 
-	"github.com/ilyalavrinov/mtgbulkbuy/pkg/mtgbulk"
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	tmpCards := mtgbulk.NamesRequest{}
+	router := mux.NewRouter()
+	h := newHandler()
+	defer h.loggerRaw.Sync()
 
-	_, err := mtgbulk.ProcessByNames(tmpCards)
-	if err != nil {
-		fmt.Printf("Could not process request for %d cards; error: %s\n", len(tmpCards.Cards), err)
+	h.logger.Debug("Registering handlers")
+	router.HandleFunc("/bulk", h.bulkHandler)
+	h.logger.Debug("Registration finished")
+
+	srv := &http.Server{
+		Handler: router,
+		Addr:    "127.0.0.1:8000",
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 	}
+
+	h.logger.Debug("start listening")
+	err := srv.ListenAndServe()
+	h.logger.Fatalw("listen failed",
+		"err", err)
+	h.logger.Debug("listen finished. Exiting")
 }

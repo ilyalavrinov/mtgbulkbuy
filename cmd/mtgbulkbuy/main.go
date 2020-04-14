@@ -17,14 +17,14 @@ func main() {
 	h.logger.Debug("Registration finished")
 
 	srv := &http.Server{
-		Handler: router,
-		Addr:    "127.0.0.1:8000",
-		// Good practice: enforce timeouts for servers you create!
+		Handler:      router,
+		Addr:         "127.0.0.1:8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
-	h.logger.Debug("start listening")
+	h.logger.Debugw("start listening",
+		"addr", srv.Addr)
 	err := srv.ListenAndServe()
 	h.logger.Fatalw("listen failed",
 		"err", err)

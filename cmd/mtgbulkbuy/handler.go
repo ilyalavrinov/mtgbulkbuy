@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -44,11 +45,24 @@ func (h *handler) bulkHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err := h.handleText(body)
+	result, err := h.handleText(body)
 	if err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		io.WriteString(resp, fmt.Sprintf("Incoming text cannot be handled\n"))
+		resp.WriteHeader(http.StatusInternalServerError)
+		h.logger.Errorw("Handle Text error",
+			"err", err)
+		return
 	}
+
+	resBody, err := json.Marshal(result.Cards)
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		h.logger.Errorw("Cannot write json with text search result",
+			"err", err)
+		return
+	}
+
+	resp.WriteHeader(http.StatusOK)
+	resp.Write(resBody)
 }
 
 var quantityRe *regexp.Regexp = regexp.MustCompile("^(\\d+)x?\\s*(.*)$")
@@ -73,7 +87,7 @@ func parseLine(line string) (string, int, error) {
 	return cardname, quantity, nil
 }
 
-func (h *handler) handleText(r io.Reader) error {
+func (h *handler) handleText(r io.Reader) (*mtgbulk.NamesResult, error) {
 	cards := mtgbulk.NewNamesRequest()
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
@@ -89,7 +103,7 @@ func (h *handler) handleText(r io.Reader) error {
 			h.logger.Warnw("could not parse line",
 				"err", err,
 				"line", line)
-			return err
+			return nil, err
 		}
 
 		h.logger.Debugw("Parsed line",
@@ -100,7 +114,14 @@ func (h *handler) handleText(r io.Reader) error {
 		if _, found := cards.Cards[name]; found {
 			h.logger.Warnw("Duplicated card",
 				"name", name)
-			return fmt.Errorf("Card with name %q is duplicated in the list", name)
+			return nil, fmt.Errorf("Card with name %q is duplicated in the list", name)
+		}
+
+		if quantity <= 0 {
+			h.logger.Warnw("Illegal requested quantity",
+				"name", name,
+				"quantity", quantity)
+			return nil, fmt.Errorf("Illegal quantity for card %q has been requested: %d", name, quantity)
 		}
 
 		cards.Cards[name] = quantity
@@ -108,20 +129,20 @@ func (h *handler) handleText(r io.Reader) error {
 	if err := scanner.Err(); err != nil {
 		h.logger.Warnw("Error reading body",
 			"err", err)
-		return err
+		return nil, err
 	}
 
 	if len(cards.Cards) == 0 {
 		h.logger.Warnw("Empty card list")
-		return fmt.Errorf("Empty card list")
+		return nil, fmt.Errorf("Empty card list")
 	}
 
-	_, err := mtgbulk.ProcessByNames(cards)
+	result, err := mtgbulk.ProcessByNames(cards)
 	if err != nil {
 		h.logger.Warnw("Could not process request",
 			"err", err)
-		return err
+		return nil, err
 	}
 
-	return nil
+	return result, nil
 }

@@ -81,7 +81,7 @@ func (c *CardResult) sortByPrice() {
 }
 
 type NamesResult struct {
-	Cards map[string]CardResult
+	RawCards map[string]CardResult
 }
 
 func ProcessByNames(cards NamesRequest) (*NamesResult, error) {
@@ -89,14 +89,14 @@ func ProcessByNames(cards NamesRequest) (*NamesResult, error) {
 		"count", len(cards.Cards))
 
 	result := &NamesResult{
-		Cards: make(map[string]CardResult, len(cards.Cards)),
+		RawCards: make(map[string]CardResult, len(cards.Cards)),
 	}
 	cardRes := newCardResult()
 	for name := range cards.Cards {
 		cardRes.merge(searchMtgSale(name))
 		cardRes.merge(searchMtgTrade(name))
 		cardRes.sortByPrice()
-		result.Cards[name] = cardRes
+		result.RawCards[name] = cardRes
 	}
 
 	return result, nil

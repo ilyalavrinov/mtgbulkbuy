@@ -35,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	for name, cards := range result.Cards {
+	for name, cards := range result.RawCards {
 		fmt.Printf("%s ==> %d\n", name, len(cards.Prices))
 	}
 }

@@ -11,6 +11,7 @@ import (
 
 func searchMtgSale(cardname string) CardResult {
 	result := newCardResult()
+	addr := mtgSaleSearchURL(cardname)
 
 	c := colly.NewCollector()
 	c.OnHTML(".ctclass", func(e *colly.HTMLElement) {
@@ -57,13 +58,12 @@ func searchMtgSale(cardname string) CardResult {
 					Quantity: countVal,
 					Platform: MtgSale,
 					Trader:   "",
-					URL:      mtgSaleSearchURL(cardname), // TODO: correct it! - there's a direct link to a card instead of a search
+					URL:      addr, // TODO: correct it! - there's a direct link to a card instead of a search
 				})
 			}
 		}
 	})
 
-	addr := mtgSaleSearchURL(cardname)
 	err := c.Visit(addr)
 	if err != nil {
 		logger.Errorw("Unable to visit with scraper",

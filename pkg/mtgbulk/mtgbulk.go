@@ -67,6 +67,13 @@ func newCardResult() CardResult {
 	}
 }
 
+func (c *CardResult) merge(other CardResult) {
+	if c.Available || other.Available {
+		c.Available = true
+	}
+	c.Prices = append(c.Prices, other.Prices...)
+}
+
 func (c *CardResult) sortByPrice() {
 	sort.Slice(c.Prices, func(i, j int) bool {
 		return c.Prices[i].Price < c.Prices[j].Price
@@ -84,10 +91,12 @@ func ProcessByNames(cards NamesRequest) (*NamesResult, error) {
 	result := &NamesResult{
 		Cards: make(map[string]CardResult, len(cards.Cards)),
 	}
+	cardRes := newCardResult()
 	for name := range cards.Cards {
-		res := searchMtgSale(name)
-		res.sortByPrice()
-		result.Cards[name] = res
+		cardRes.merge(searchMtgSale(name))
+		cardRes.merge(searchMtgTrade(name))
+		cardRes.sortByPrice()
+		result.Cards[name] = cardRes
 	}
 
 	return result, nil

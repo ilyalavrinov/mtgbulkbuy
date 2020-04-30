@@ -26,7 +26,9 @@ func main() {
 	h.logger.Debugw("start listening",
 		"addr", srv.Addr)
 	err := srv.ListenAndServe()
-	h.logger.Fatalw("listen failed",
-		"err", err)
+	if err != nil {
+		h.logger.Fatalw("listen failed",
+			"err", err)
+	}
 	h.logger.Debug("listen finished. Exiting")
 }

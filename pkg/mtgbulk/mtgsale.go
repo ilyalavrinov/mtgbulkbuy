@@ -57,7 +57,7 @@ func searchMtgSale(cardname string) CardResult {
 					Currency: RUR,
 					Quantity: countVal,
 					Platform: MtgSale,
-					Trader:   "",
+					Trader:   "mtgsale",
 					URL:      addr, // TODO: correct it! - there's a direct link to a card instead of a search
 				})
 			}

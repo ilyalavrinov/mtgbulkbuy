@@ -2,6 +2,7 @@ package mtgbulk
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 )
 
@@ -82,6 +83,8 @@ func (c *CardResult) sortByPrice() {
 
 type NamesResult struct {
 	RawCards map[string]CardResult
+
+	MinPricesRule map[string][]CardPrice
 }
 
 func ProcessByNames(cards NamesRequest) (*NamesResult, error) {
@@ -91,12 +94,56 @@ func ProcessByNames(cards NamesRequest) (*NamesResult, error) {
 	result := &NamesResult{
 		RawCards: make(map[string]CardResult, len(cards.Cards)),
 	}
-	cardRes := newCardResult()
 	for name := range cards.Cards {
+		cardRes := newCardResult()
 		cardRes.merge(searchMtgSale(name))
 		cardRes.merge(searchMtgTrade(name))
 		cardRes.sortByPrice()
 		result.RawCards[name] = cardRes
+	}
+
+	greedyMinPrices, err := calcGreedyMinPrices(cards, result.RawCards)
+	if err != nil {
+		logger.Errorw("could not calculate greedy min prices",
+			"err", err)
+		return result, err
+	}
+	result.MinPricesRule = greedyMinPrices
+
+	return result, nil
+}
+
+func calcGreedyMinPrices(req NamesRequest, cards map[string]CardResult) (map[string][]CardPrice, error) {
+	result := make(map[string][]CardPrice, len(req.Cards))
+
+	for name, reqCount := range req.Cards {
+		cardData, found := cards[name]
+		if !found {
+			return nil, fmt.Errorf("Card %q not found", name)
+		}
+
+		if !cardData.Available {
+			return nil, fmt.Errorf("Card %q is not available", name)
+		}
+
+		cardsFound := 0
+		for _, p := range cardData.Prices {
+			if cardsFound >= reqCount {
+				break
+			}
+			toAdd := p
+			if toAdd.Quantity > reqCount-cardsFound {
+				toAdd.Quantity = reqCount - cardsFound
+			}
+			result[name] = append(result[name], toAdd)
+			cardsFound += toAdd.Quantity
+			logger.Debugw("greedy min price add result",
+				"name", name,
+				"qty", toAdd.Quantity,
+				"price", toAdd.Price,
+				"totalFound", cardsFound,
+				"reqCount", reqCount)
+		}
 	}
 
 	return result, nil

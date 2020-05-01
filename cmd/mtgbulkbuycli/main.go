@@ -36,6 +36,15 @@ func main() {
 	}
 
 	for name, cards := range result.RawCards {
-		fmt.Printf("%s ==> %d\n", name, len(cards.Prices))
+		fmt.Printf("%s ==> total found %d\n", name, len(cards.Prices))
+	}
+
+	if len(result.MinPricesRule) > 0 {
+		fmt.Println("Min price rule:")
+		for name, prices := range result.MinPricesRule {
+			for _, p := range prices {
+				fmt.Printf("%s ==> qty: %d; price: %.0f; seller: %s\n", name, p.Quantity, p.Price, p.Trader)
+			}
+		}
 	}
 }

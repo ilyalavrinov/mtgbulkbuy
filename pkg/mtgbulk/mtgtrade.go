@@ -9,11 +9,15 @@ import (
 )
 
 func searchMtgTrade(cardname string) CardResult {
+	cardname = strings.ToLower(cardname)
 	result := newCardResult()
 	addr := mtgTradeSearchURL(cardname)
 
 	c := colly.NewCollector()
 	c.OnHTML(".search-item", func(e *colly.HTMLElement) {
+		if strings.ToLower(e.ChildText(".catalog-title")) != cardname {
+			return
+		}
 		e.ForEach("table.search-card", func(i int, eTable *colly.HTMLElement) {
 			trader := eTable.ChildText("tbody .trader-name a")
 

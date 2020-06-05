@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/ilyalavrinov/mtgbulkbuy/internal/texthandler"
+	"github.com/jedib0t/go-pretty/table"
 )
 
 const (
@@ -41,10 +43,22 @@ func main() {
 
 	if len(result.MinPricesRule) > 0 {
 		fmt.Println("Min price rule:")
+		var total float32
+		t := table.NewWriter()
+		t.SetOutputMirror(os.Stdout)
+		t.AppendHeader(table.Row{"Cardname", "Qty", "Price", "Seller"})
+		rows := make([]table.Row, 0)
 		for name, prices := range result.MinPricesRule {
 			for _, p := range prices {
-				fmt.Printf("%s ==> qty: %d; price: %.0f; seller: %s\n", name, p.Quantity, p.Price, p.Trader)
+				rows = append(rows, table.Row{name, p.Quantity, p.Price, p.Trader})
+				total += p.Price
 			}
 		}
+		sort.Slice(rows, func(i, j int) bool {
+			return rows[i][0].(string) < rows[j][0].(string)
+		})
+		t.AppendRows(rows)
+		t.AppendFooter(table.Row{"", "", "Total", total})
+		t.Render()
 	}
 }

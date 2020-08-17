@@ -7,7 +7,9 @@ import (
 	"sort"
 
 	"github.com/ilyalavrinov/mtgbulkbuy/internal/texthandler"
+	"github.com/ilyalavrinov/mtgbulkbuy/pkg/mtgbulk"
 	"github.com/jedib0t/go-pretty/table"
+	"github.com/tealeg/xlsx"
 )
 
 const (
@@ -62,50 +64,43 @@ func main() {
 		t.Render()
 	}
 
-	{
-		res := *filename + ".matrix.out"
-		os.Remove(res)
-		f, err := os.Create(res)
-		if err != nil {
-			fmt.Printf("Could not write possession matrix, aborting")
-			return
-		}
-		t := table.NewWriter()
-		t.SetOutputMirror(f)
-		posT := result.MinPricesMatrix.ToTable()
-		header := make(table.Row, 0, len(posT.Sellers)+2)
-		header = append(header, "CARD\\\\SELLER")
-		for _, s := range posT.Sellers {
-			header = append(header, s)
-		}
-		header = append(header, "TOTAL SELLERS")
-		t.AppendHeader(header)
+	res := *filename + ".matrix.out"
+	os.Remove(res)
+	f, err = os.Create(res)
+	defer f.Close()
+	if err != nil {
+		fmt.Printf("Could not create file possession matrix, aborting")
+		return
+	}
+	t := mtgbulk.NewPossessionTable(result.MinPricesMatrix)
+	t.ToTextTable(f)
+	if err != nil {
+		fmt.Printf("Could not write possession matrix, aborting")
+		return
+	}
 
-		rows := make([]table.Row, 0, len(posT.Cards))
-		for ci, pr := range posT.Prices {
-			row := make(table.Row, 0, len(posT.Sellers)+1)
-			row = append(row, posT.Cards[ci])
-			for _, p := range pr {
-				row = append(row, p)
-			}
-			row = append(row, posT.CardSellersTotal[ci])
-			rows = append(rows, row)
-		}
-		t.AppendRows(rows)
+	xls := xlsx.NewFile()
+	sh, err := xls.AddSheet("min_prices_all")
+	if err != nil {
+		fmt.Printf("Could not add min prices table xlsx sheet, aborting")
+		return
+	}
+	err = t.ToXlsxSheet(sh)
+	if err != nil {
+		fmt.Printf("Could not fill min prices table xlsx sheet, aborting")
+		return
+	}
 
-		f1 := make(table.Row, 0, len(posT.Sellers)+2)
-		f1 = append(f1, "Total price")
-		for _, p := range posT.SellerPriceTotal {
-			f1 = append(f1, p)
-		}
-		t.AppendFooter(f1)
-
-		f2 := make(table.Row, 0, len(posT.Sellers)+2)
-		f2 = append(f2, "Total cards")
-		for _, c := range posT.SellerCardsTotal {
-			f2 = append(f2, c)
-		}
-		t.AppendFooter(f2)
-		t.Render()
+	xlsname := *filename + ".xlsx"
+	os.Remove(xlsname)
+	fxls, err := os.Create(xlsname)
+	if err != nil {
+		fmt.Printf("Could not write possession matrix xlsx file, aborting")
+		return
+	}
+	err = xls.Write(fxls)
+	if err != nil {
+		fmt.Printf("Could not write possession matrix xlsx, aborting")
+		return
 	}
 }

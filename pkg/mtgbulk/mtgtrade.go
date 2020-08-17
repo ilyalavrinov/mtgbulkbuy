@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gocolly/colly"
 )
@@ -14,6 +15,7 @@ func searchMtgTrade(cardname string) CardResult {
 	addr := mtgTradeSearchURL(cardname)
 
 	c := colly.NewCollector()
+	c.SetRequestTimeout(20 * time.Second)
 	c.OnHTML(".search-item", func(e *colly.HTMLElement) {
 		if strings.ToLower(e.ChildText(".catalog-title")) != cardname {
 			return

@@ -49,7 +49,7 @@ func (h *handler) bulkHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resBody, err := json.Marshal(result.RawCards)
+	resBody, err := json.Marshal(result.MinPricesNoDelivery)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		h.logger.Errorw("Cannot write json with text search result",

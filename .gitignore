@@ -15,3 +15,6 @@
 # vendor/
 cmd/mtgbulkbuy/mtgbulkbuy
 cmd/mtgbulkbuycli/mtgbulkbuycli
+cmd/mtgbulkbuycli/*.txt
+cmd/mtgbulkbuycli/*.out
+cmd/mtgbulkbuycli/*.xlsx

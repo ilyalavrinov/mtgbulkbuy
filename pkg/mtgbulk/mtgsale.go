@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gocolly/colly"
 )
@@ -14,6 +15,7 @@ func searchMtgSale(cardname string) CardResult {
 	addr := mtgSaleSearchURL(cardname)
 
 	c := colly.NewCollector()
+	c.SetRequestTimeout(20 * time.Second)
 	c.OnHTML(".ctclass", func(e *colly.HTMLElement) {
 		name1 := strings.ToLower(e.ChildText(".tnamec"))
 		name2 := strings.ToLower(e.ChildText(".smallfont"))

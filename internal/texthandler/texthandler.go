@@ -35,6 +35,8 @@ func parseLine(line string) (string, int, error) {
 
 func HandleText(r io.Reader) (*mtgbulk.NamesResult, error) {
 	cards := mtgbulk.NewNamesRequest()
+	// TODO: parse from text
+	//cards.DeliveryFee = 100
 	scanner := bufio.NewScanner(r)
 	for scanner.Scan() {
 		line := scanner.Text()

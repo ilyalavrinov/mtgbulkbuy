@@ -6,7 +6,6 @@ import (
 	"os"
 	"sort"
 
-	"github.com/ilyalavrinov/mtgbulkbuy/internal/texthandler"
 	"github.com/ilyalavrinov/mtgbulkbuy/pkg/mtgbulk"
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/tealeg/xlsx"
@@ -33,7 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	result, err := texthandler.HandleText(f)
+	result, err := mtgbulk.ProcessText(f)
 	if err != nil {
 		fmt.Printf("could not get result; error: %s", err)
 		os.Exit(1)

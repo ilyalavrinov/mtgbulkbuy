@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/ilyalavrinov/mtgbulkbuy/internal/texthandler"
+	"github.com/ilyalavrinov/mtgbulkbuy/pkg/mtgbulk"
 	"go.uber.org/zap"
 )
 
@@ -41,7 +41,7 @@ func (h *handler) bulkHandler(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	result, err := texthandler.HandleText(body)
+	result, err := mtgbulk.ProcessText(body)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		h.logger.Errorw("Handle Text error",

@@ -132,7 +132,7 @@ func (t *PossessionTable) ToTextTable(out io.Writer) error {
 	return nil
 }
 
-func (t *PossessionTable) ToXlsxSheet(out *xlsx.Sheet) error {
+func (t *PossessionTable) ToXlsxSheet(out *xlsx.Sheet, minPrices map[string]int) error {
 	xOffset := 1
 	yOffset := 0
 	for x, seller := range t.Sellers {
@@ -149,10 +149,18 @@ func (t *PossessionTable) ToXlsxSheet(out *xlsx.Sheet) error {
 
 	xOffset = 1
 	yOffset = 1
+	minPriceStyle := xlsx.NewStyle()
+	minPriceStyle.ApplyFill = true
+	minPriceStyle.Fill.PatternType = xlsx.Solid_Cell_Fill
+	minPriceStyle.Fill.FgColor = xlsx.RGB_Light_Green
 	for y, row := range t.Prices {
 		for x, p := range row {
 			c := out.Cell(yOffset+y, xOffset+x)
 			c.SetInt(p)
+			pMin := minPrices[t.Cards[y]]
+			if pMin != 0 && p == pMin {
+				c.SetStyle(minPriceStyle)
+			}
 		}
 	}
 

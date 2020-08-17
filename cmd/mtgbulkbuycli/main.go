@@ -79,28 +79,40 @@ func main() {
 		return
 	}
 
+	err = writeToXlsx(*filename, result, t)
+	if err != nil {
+		fmt.Printf("Could not write xlsx file, aborting")
+		return
+	}
+}
+
+func writeToXlsx(baseName string, res *mtgbulk.NamesResult, t *mtgbulk.PossessionTable) error {
+
+	minPrices := make(map[string]int, len(res.MinPricesNoDelivery))
+	for card, pp := range res.MinPricesNoDelivery {
+		minPrices[card] = int(pp[0].Price)
+	}
+
 	xls := xlsx.NewFile()
 	sh, err := xls.AddSheet("min_prices_all")
 	if err != nil {
-		fmt.Printf("Could not add min prices table xlsx sheet, aborting")
-		return
+		return err
 	}
-	err = t.ToXlsxSheet(sh)
+	err = t.ToXlsxSheet(sh, minPrices)
 	if err != nil {
-		fmt.Printf("Could not fill min prices table xlsx sheet, aborting")
-		return
+		return err
 	}
 
 	xlsname := *filename + ".xlsx"
 	os.Remove(xlsname)
 	fxls, err := os.Create(xlsname)
 	if err != nil {
-		fmt.Printf("Could not write possession matrix xlsx file, aborting")
-		return
+		return err
 	}
 	err = xls.Write(fxls)
 	if err != nil {
-		fmt.Printf("Could not write possession matrix xlsx, aborting")
-		return
+		return err
 	}
+
+	return nil
 }

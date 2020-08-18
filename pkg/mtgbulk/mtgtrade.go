@@ -14,6 +14,7 @@ func searchMtgTrade(cardname string) CardResult {
 	result := newCardResult()
 	addr := mtgTradeSearchURL(cardname)
 
+	visitedPages := make(map[string]bool)
 	c := colly.NewCollector()
 	c.SetRequestTimeout(20 * time.Second)
 	c.OnHTML(".search-item", func(e *colly.HTMLElement) {
@@ -63,6 +64,26 @@ func searchMtgTrade(cardname string) CardResult {
 				})
 			})
 		})
+	})
+
+	c.OnHTML("span.pagination-item", func(e *colly.HTMLElement) {
+		page := e.Text
+		visitedPages[e.Text] = true
+		logger.Debugw("Visited page",
+			"page", page)
+	})
+
+	c.OnHTML("a.pagination-item", func(e *colly.HTMLElement) {
+		page := e.Attr("title")
+		if visitedPages[page] {
+			return
+		}
+		visitedPages[page] = true
+		url := e.Attr("href")
+		logger.Debugw("Visiting page",
+			"page", page,
+			"url", url)
+		e.Request.Visit(url)
 	})
 
 	err := c.Visit(addr)

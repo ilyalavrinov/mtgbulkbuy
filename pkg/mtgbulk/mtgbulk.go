@@ -10,7 +10,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 )
+
+// TODO: remove this ugly hack
+var cardLib Library
+var libOnce sync.Once
 
 type NamesRequest struct {
 	Cards map[string]int
@@ -122,11 +127,29 @@ func ProcessByNames(req NamesRequest) (*NamesResult, error) {
 	result := &NamesResult{
 		AllSortedCards: make(map[string]CardResult, len(req.Cards)),
 	}
+
+	// TODO: remove this ugly hack
+	libOnce.Do(func() {
+		dumpPath := "./scryfall.all.dump"
+		var err error
+		cardLib, err = NewInMemoryLibrary(dumpPath)
+		if err != nil {
+			panic(err)
+		}
+	})
+
 	for name := range req.Cards {
+		allNames, err := cardLib.CardAliases(name)
+		if err != nil {
+			logger.Errorw("could not get all names for card, is it missing?",
+				"err", err)
+			return result, err
+		}
+
 		cardRes := newCardResult()
 		cardRes.merge(searchMtgSale(name))
 		cardRes.merge(searchMtgTrade(name))
-		cardRes.merge(searchSpellMarket(name))
+		cardRes.merge(searchSpellMarket(name, allNames))
 		cardRes.sortByPrice()
 		result.AllSortedCards[name] = cardRes
 	}

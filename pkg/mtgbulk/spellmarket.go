@@ -9,12 +9,17 @@ import (
 	"github.com/gocolly/colly"
 )
 
-func searchSpellMarket(cardname string) CardResult {
+func searchSpellMarket(searchName string, names map[string]bool) CardResult {
 	result := newCardResult()
-	addr := spellMarketSearchURL(cardname)
+	addr := spellMarketSearchURL(searchName)
 	c := colly.NewCollector()
 	c.OnHTML("div.product-wrapper", func(e *colly.HTMLElement) {
 		if strings.Contains(e.Attr("class"), "outofstock") {
+			return
+		}
+
+		name := strings.ToLower(e.ChildText(".name"))
+		if !names[name] {
 			return
 		}
 
@@ -35,7 +40,7 @@ func searchSpellMarket(cardname string) CardResult {
 		}
 
 		logger.Debugw("card found",
-			"cardname", cardname,
+			"cardname", searchName,
 			"price", price,
 			"qty", qty)
 
@@ -61,6 +66,6 @@ func searchSpellMarket(cardname string) CardResult {
 	return result
 }
 
-func spellMarketSearchURL(cardname string) string {
-	return fmt.Sprintf("https://spellmarket.ru/search?search=%s%s", url.PathEscape(cardname), url.PathEscape("&limit=1000"))
+func spellMarketSearchURL(searchName string) string {
+	return fmt.Sprintf("https://spellmarket.ru/search?search=%s%s", url.PathEscape(searchName), url.PathEscape("&limit=1000"))
 }

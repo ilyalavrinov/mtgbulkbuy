@@ -2,6 +2,7 @@ package mtgbulk
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -13,6 +14,11 @@ func searchSpellMarket(searchName string, names map[string]bool) CardResult {
 	result := newCardResult()
 	addr := spellMarketSearchURL(searchName)
 	c := colly.NewCollector()
+
+	currency1 := &http.Cookie{Name: "currency", Value: "RUB"}
+	currency2 := &http.Cookie{Name: "prmn_currency", Value: "RUB"}
+	c.SetCookies(addr, []*http.Cookie{currency1, currency2})
+
 	c.OnHTML("div.product-wrapper", func(e *colly.HTMLElement) {
 		if strings.Contains(e.Attr("class"), "outofstock") {
 			return

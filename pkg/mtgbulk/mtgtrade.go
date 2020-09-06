@@ -2,6 +2,7 @@ package mtgbulk
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -16,11 +17,32 @@ func searchMtgTrade(cardname string) CardResult {
 
 	visitedPages := make(map[string]bool)
 	c := colly.NewCollector()
-	c.SetRequestTimeout(20 * time.Second)
+	defCopy := *(http.DefaultTransport.(*http.Transport))
+	var tr *http.Transport = &defCopy
+	tr.ResponseHeaderTimeout = 20 * time.Second
+	c.WithTransport(tr)
 	c.OnHTML(".search-item", func(e *colly.HTMLElement) {
-		if strings.ToLower(e.ChildText(".catalog-title")) != cardname {
-			return
+		nameEn := strings.ToLower(e.ChildText(".catalog-title"))
+		if nameEn != cardname {
+			matched := false
+			e.ForEach("p", func(i int, eP *colly.HTMLElement) {
+				if !matched {
+					nameRu := strings.ToLower(strings.TrimSpace(eP.Text))
+					logger.Debugw("search item analyze Russian name",
+						"cardname", cardname,
+						"nameEn", nameEn,
+						"nameRu", nameRu)
+					if nameRu == cardname {
+						matched = true
+					}
+				}
+			})
+
+			if !matched {
+				return
+			}
 		}
+
 		e.ForEach("table.search-card", func(i int, eTable *colly.HTMLElement) {
 			trader := eTable.ChildText("tbody .trader-name a")
 

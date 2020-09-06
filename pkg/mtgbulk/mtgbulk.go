@@ -44,8 +44,9 @@ func NewNamesRequest() NamesRequest {
 type PlatformType int
 
 const (
-	MtgSale  PlatformType = iota
-	MtgTrade PlatformType = iota
+	MtgSale     PlatformType = iota
+	MtgTrade    PlatformType = iota
+	SpellMarket PlatformType = iota
 )
 
 type CurrencyType int
@@ -125,6 +126,7 @@ func ProcessByNames(req NamesRequest) (*NamesResult, error) {
 		cardRes := newCardResult()
 		cardRes.merge(searchMtgSale(name))
 		cardRes.merge(searchMtgTrade(name))
+		cardRes.merge(searchSpellMarket(name))
 		cardRes.sortByPrice()
 		result.AllSortedCards[name] = cardRes
 	}

@@ -42,6 +42,8 @@ func searchAutumnsMagic(searchName string, names map[string]bool) CardResult {
 			return
 		}
 		logger.Debugw("card",
+			"searchName", searchName,
+			"name", name,
 			"price", price,
 			"count", qty)
 

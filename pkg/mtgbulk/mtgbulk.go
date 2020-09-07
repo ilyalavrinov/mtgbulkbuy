@@ -147,11 +147,18 @@ func ProcessByNames(req NamesRequest) (*NamesResult, error) {
 			return result, err
 		}
 
+		englishName, err := cardLib.EnglishName(name)
+		if err != nil {
+			logger.Errorw("could not get english name for card, is it missing?",
+				"err", err)
+			return result, err
+		}
+
 		cardRes := newCardResult()
 		cardRes.merge(searchMtgSale(name))
 		cardRes.merge(searchMtgTrade(name))
 		cardRes.merge(searchSpellMarket(name, allNames))
-		cardRes.merge(searchAutumnsMagic(name, allNames))
+		cardRes.merge(searchAutumnsMagic(englishName, allNames))
 		cardRes.sortByPrice()
 		result.AllSortedCards[name] = cardRes
 	}

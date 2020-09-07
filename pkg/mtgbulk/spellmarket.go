@@ -46,7 +46,8 @@ func searchSpellMarket(searchName string, names map[string]bool) CardResult {
 		}
 
 		logger.Debugw("card found",
-			"cardname", searchName,
+			"searchName", searchName,
+			"name", name,
 			"price", price,
 			"qty", qty)
 

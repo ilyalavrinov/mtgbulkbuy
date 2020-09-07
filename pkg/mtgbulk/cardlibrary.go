@@ -9,11 +9,13 @@ import (
 
 type Library interface {
 	CardAliases(string) (map[string]bool, error)
+	EnglishName(string) (string, error)
 }
 
 type InMemoryLibrary struct {
-	cardIDtoNames map[string]map[string]bool
-	cardNameToID  map[string]string
+	cardIDtoNames       map[string]map[string]bool
+	cardNameToID        map[string]string
+	cardIDtoEnglishName map[string]string
 }
 
 type Card struct {
@@ -39,8 +41,9 @@ func NewInMemoryLibrary(dumpPath string) (Library, error) {
 	}
 
 	lib := &InMemoryLibrary{
-		cardIDtoNames: make(map[string]map[string]bool),
-		cardNameToID:  make(map[string]string),
+		cardIDtoNames:       make(map[string]map[string]bool),
+		cardNameToID:        make(map[string]string),
+		cardIDtoEnglishName: make(map[string]string),
 	}
 
 	for dec.More() {
@@ -51,6 +54,9 @@ func NewInMemoryLibrary(dumpPath string) (Library, error) {
 		}
 		if c.LocalName == "" {
 			c.LocalName = c.Name
+			if c.Lang == "en" {
+				lib.cardIDtoEnglishName[c.OracleID] = c.Name
+			}
 		}
 		c.LocalName = strings.ToLower(c.LocalName)
 		names, found := lib.cardIDtoNames[c.OracleID]
@@ -97,4 +103,13 @@ func (lib *InMemoryLibrary) CardAliases(cardname string) (map[string]bool, error
 		return nil, fmt.Errorf("no Oracle ID for card: %s", cardname)
 	}
 	return lib.cardIDtoNames[id], nil
+}
+
+func (lib *InMemoryLibrary) EnglishName(cardname string) (string, error) {
+	cardname = strings.ToLower(cardname)
+	id, found := lib.cardNameToID[cardname]
+	if !found {
+		return "", fmt.Errorf("no Oracle ID for card: %s", cardname)
+	}
+	return lib.cardIDtoEnglishName[id], nil
 }

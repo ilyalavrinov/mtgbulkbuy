@@ -53,6 +53,7 @@ const (
 	MtgTrade     PlatformType = iota
 	SpellMarket  PlatformType = iota
 	AutumnsMagic PlatformType = iota
+	TopDeck      PlatformType = iota
 )
 
 type CurrencyType int
@@ -159,6 +160,7 @@ func ProcessByNames(req NamesRequest) (*NamesResult, error) {
 		cardRes.merge(searchMtgTrade(name))
 		cardRes.merge(searchSpellMarket(name, allNames))
 		cardRes.merge(searchAutumnsMagic(englishName, allNames))
+		cardRes.merge(searchTopDeck(name))
 		cardRes.sortByPrice()
 		result.AllSortedCards[name] = cardRes
 	}

@@ -51,7 +51,7 @@ func main() {
 		rows := make([]table.Row, 0)
 		for name, prices := range result.MinPricesNoDelivery {
 			for _, p := range prices {
-				rows = append(rows, table.Row{name, p.Quantity, p.Price, p.Trader})
+				rows = append(rows, table.Row{name, p.Quantity, p.Price, p.SellerFullName()})
 				total += p.Price
 			}
 		}

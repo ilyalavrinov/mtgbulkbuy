@@ -56,6 +56,28 @@ const (
 	TopDeck      PlatformType = iota
 )
 
+var shops = map[PlatformType]bool{
+	MtgSale:      true,
+	SpellMarket:  true,
+	AutumnsMagic: true,
+}
+
+func (pt PlatformType) String() string {
+	switch pt {
+	case MtgSale:
+		return "MtgSale"
+	case MtgTrade:
+		return "MtgTrade"
+	case SpellMarket:
+		return "SpellMarket"
+	case AutumnsMagic:
+		return "AutumsMagic"
+	case TopDeck:
+		return "TopDeck"
+	}
+	return ""
+}
+
 type CurrencyType int
 
 const (
@@ -87,6 +109,13 @@ type CardPrice struct {
 	Platform PlatformType
 	Trader   string
 	URL      string
+}
+
+func (cp *CardPrice) SellerFullName() string {
+	if shops[cp.Platform] {
+		return cp.Trader
+	}
+	return cp.Trader + "@" + cp.Platform.String()
 }
 
 type CardResult struct {
@@ -310,7 +339,7 @@ func fillMinPricesMatrix(cards map[string]CardResult) *PossessionMatrix {
 	m := NewPossessionMatrix()
 	for c, res := range cards {
 		for _, p := range res.Prices {
-			m.AddCard(p.Trader, c, int(p.Price))
+			m.AddCard(p.SellerFullName(), c, int(p.Price))
 		}
 	}
 	return m

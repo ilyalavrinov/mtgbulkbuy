@@ -229,6 +229,12 @@ func (t *PossessionTable) ToXlsxSheet(out *xlsx.Sheet, minPrices map[string]int)
 	noCardStyle.Fill.PatternType = xlsx.Solid_Cell_Fill
 	noCardStyle.Fill.FgColor = xlsx.RGB_Light_Red
 
+	moreThanMedianStyle := xlsx.NewStyle()
+	moreThanMedianStyle.Font.Color = xlsx.RGB_Dark_Red
+
+	lessThanMedianStyle := xlsx.NewStyle()
+	lessThanMedianStyle.Font.Color = xlsx.RGB_Dark_Green
+
 	for y, row := range t.Prices {
 		for x, p := range row {
 			c := out.Cell(yOffset+y, xOffset+x)
@@ -240,6 +246,12 @@ func (t *PossessionTable) ToXlsxSheet(out *xlsx.Sheet, minPrices map[string]int)
 			pMin := minPrices[t.Cards[y]]
 			if pMin != 0 && p == pMin {
 				c.SetStyle(minPriceStyle)
+			} else {
+				if p > t.MedianPrice[y] {
+					c.SetStyle(moreThanMedianStyle)
+				} else if p < t.MedianPrice[y] {
+					c.SetStyle(lessThanMedianStyle)
+				}
 			}
 		}
 	}

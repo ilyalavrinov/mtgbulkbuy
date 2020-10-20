@@ -46,6 +46,7 @@ type PossessionTable struct {
 	Prices                             [][]int
 	SellerCardsTotal, SellerPriceTotal []int
 	CardSellersTotal                   []int
+	MinPrice, AvgPrice, MedianPrice    []int
 }
 
 func NewPossessionTable(m *PossessionMatrix) *PossessionTable {
@@ -76,6 +77,8 @@ func NewPossessionTable(m *PossessionMatrix) *PossessionTable {
 	}
 	sort.Strings(t.Cards)
 
+	cardPrices := make(map[string][]int, cardsN)
+
 	for x, seller := range t.Sellers {
 		for y, card := range t.Cards {
 			p, ok := m.SellerCards[seller][card]
@@ -84,9 +87,45 @@ func NewPossessionTable(m *PossessionMatrix) *PossessionTable {
 			if ok {
 				t.SellerCardsTotal[x] = t.SellerCardsTotal[x] + 1
 				t.CardSellersTotal[y] = t.CardSellersTotal[y] + 1
+
+				cardPrices[card] = append(cardPrices[card], p)
 			}
 		}
 	}
+
+	for card, prices := range cardPrices {
+		sort.Ints(prices)
+		cardPrices[card] = prices
+	}
+
+	t.MinPrice = make([]int, cardsN)
+	t.AvgPrice = make([]int, cardsN)
+	t.MedianPrice = make([]int, cardsN)
+	for i, card := range t.Cards {
+		prices := cardPrices[card]
+		if len(prices) == 0 {
+			t.MinPrice[i] = 0
+			t.AvgPrice[i] = 0
+			t.MedianPrice[i] = 0
+		} else {
+			t.MinPrice[i] = prices[0]
+
+			sum := 0
+			for _, p := range prices {
+				sum += p
+			}
+			t.AvgPrice[i] = sum / len(prices)
+
+			if len(prices)%2 == 0 {
+				ix2 := len(prices) / 2
+				ix1 := ix2 - 1
+				t.MedianPrice[i] = (prices[ix1] + prices[ix2]) / 2
+			} else {
+				t.MedianPrice[i] = prices[len(prices)/2]
+			}
+		}
+	}
+
 	return t
 }
 
@@ -133,21 +172,51 @@ func (t *PossessionTable) ToTextTable(out io.Writer) error {
 }
 
 func (t *PossessionTable) ToXlsxSheet(out *xlsx.Sheet, minPrices map[string]int) error {
-	xOffset := 1
-	yOffset := 0
-	for x, seller := range t.Sellers {
-		c := out.Cell(yOffset+0, xOffset+x)
-		c.SetString(seller)
-	}
-
-	xOffset = 0
-	yOffset = 1
+	xOffset := 0
+	yOffset := 1
 	for y, card := range t.Cards {
 		c := out.Cell(yOffset+y, xOffset+0)
 		c.SetString(card)
 	}
 
-	xOffset = 1
+	xOffset = xOffset + 1
+	yOffset = 0
+	{
+		c := out.Cell(yOffset+0, xOffset+0)
+		c.SetString("MIN")
+		for y, price := range t.MinPrice {
+			c := out.Cell(yOffset+1+y, xOffset+0)
+			c.SetInt(price)
+		}
+	}
+
+	xOffset = xOffset + 1
+	{
+		c := out.Cell(yOffset+0, xOffset+0)
+		c.SetString("AVG")
+		for y, price := range t.AvgPrice {
+			c := out.Cell(yOffset+1+y, xOffset+0)
+			c.SetInt(price)
+		}
+	}
+
+	xOffset = xOffset + 1
+	{
+		c := out.Cell(yOffset+0, xOffset+0)
+		c.SetString("MEDIAN")
+		for y, price := range t.MedianPrice {
+			c := out.Cell(yOffset+1+y, xOffset+0)
+			c.SetInt(price)
+		}
+	}
+
+	xOffset = xOffset + 2
+	yOffset = 0
+	for x, seller := range t.Sellers {
+		c := out.Cell(yOffset+0, xOffset+x)
+		c.SetString(seller)
+	}
+
 	yOffset = 1
 
 	minPriceStyle := xlsx.NewStyle()

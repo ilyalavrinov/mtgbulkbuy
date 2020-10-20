@@ -15,7 +15,7 @@ var re = regexp.MustCompile("JSON\\.parse\\(\\\"(.*)\\\"\\)\\,")
 type topdeckCard struct {
 	EngName string `json:"rus_name"`
 	RusName string `json:"eng_name"`
-	URL     string `json:"url`
+	URL     string `json:"url"`
 	Seller  struct {
 		Name string `json:"name"`
 	} `json:"seller"`

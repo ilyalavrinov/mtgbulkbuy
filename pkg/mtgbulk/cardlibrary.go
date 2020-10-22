@@ -52,6 +52,10 @@ func NewInMemoryLibrary(dumpPath string) (Library, error) {
 		if err != nil {
 			return nil, fmt.Errorf("Cannot decode file with dump: %w", err)
 		}
+		if c.Lang != "en" && c.Lang != "ru" {
+			continue
+		}
+
 		if c.LocalName == "" {
 			c.LocalName = c.Name
 			if c.Lang == "en" {
@@ -66,26 +70,14 @@ func NewInMemoryLibrary(dumpPath string) (Library, error) {
 		}
 		names[c.LocalName] = true
 		lib.cardNameToID[c.LocalName] = c.OracleID
-		/*
-				names := []string{c.Name, c.LocalName}
-				if strings.Contains(c.Name, "//") {
-					names = []string{}
-					names = append(names, strings.Split(c.Name, " // ")...)
-					names = append(names, strings.Split(c.LocalName, " // ")...)
-				}
-				for _, n := range names {
-					n := strings.ToLower(n)
-					_, found := h.cardsByName[n]
-					if found {
-						if c.Lang == "en" {
-							h.cardsByName[n] = c
-						}
-					} else {
-						h.cardsByName[n] = c
-					}
-				}
+
+		if strings.Contains(c.LocalName, "//") {
+			parts := strings.Split(c.LocalName, " // ")
+			for _, p := range parts {
+				names[p] = true
+				lib.cardNameToID[p] = c.OracleID
 			}
-		*/
+		}
 	}
 	_, err = dec.Token()
 	if err != nil {
